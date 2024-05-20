@@ -7,7 +7,9 @@ public class PlayerMove : MonoBehaviour
 {
     public float maxSpeed;
     public float jumpPower;
+    public PlayerMove player;
     int jump_cnt = 0;
+    public GameManager gameManager;
     Rigidbody2D rigid;
     SpriteRenderer spriteRenderer;
     Animator anim;
@@ -89,8 +91,21 @@ public class PlayerMove : MonoBehaviour
         }
     }
 
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.gameObject.tag == "Finish")
+        {
+            //Next Stage
+            gameManager.heart = 3;
+            gameManager.NextStage();
+        }
+    }
+
     void OnDamaged(Vector2 targetPos)
     {
+        //하트 감소
+        gameManager.HeartDown();
+
         //Change Layer(Immortal Active)
         gameObject.layer = 11;
 
@@ -112,4 +127,5 @@ public class PlayerMove : MonoBehaviour
         gameObject.layer = 10;
         spriteRenderer.color = new Color(1, 1, 1, 1);
     }
+
 }
