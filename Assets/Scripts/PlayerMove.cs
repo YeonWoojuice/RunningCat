@@ -6,44 +6,48 @@ using UnityEngine;
 public class PlayerMove : MonoBehaviour
 {
     public float maxSpeed;
-    public float jumpPower;
+    public float jumpPower; //점프높이
     public PlayerMove player;
-    int jump_cnt = 0;
+    int jump_cnt = 0; //이단점프
     public GameManager gameManager;
     Rigidbody2D rigid;
     SpriteRenderer spriteRenderer;
     Animator anim;
+    public int Max = 14;
 
     void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         anim = GetComponent<Animator>();
+
+
+
     }
     void Update()
     {
         //Jump
         if (Input.GetButtonUp("Jump") && jump_cnt < 2/*!anim.GetBool("isJumping")*/)
         {
-            rigid.AddForce(Vector2.up*jumpPower,ForceMode2D.Impulse);
+            rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
             anim.SetBool("isJumping", true);
             jump_cnt++;
         }
-        
+
 
         //Stop Speed
         if (Input.GetButtonUp("Horizontal"))
         {
-            rigid.velocity = new Vector2(rigid.velocity.normalized.x * 0.5f,rigid.velocity.y);
-               
+            rigid.velocity = new Vector2(rigid.velocity.normalized.x * 0.5f, rigid.velocity.y);
+
         }
 
         //Direction Sprite
         if (Input.GetButtonDown("Horizontal"))
-            spriteRenderer.flipX = (Input.GetAxisRaw("Horizontal")==-1);
-        
+            spriteRenderer.flipX = (Input.GetAxisRaw("Horizontal") == -1);
+
         //Animation
-        if(Mathf.Abs(rigid.velocity.x)< 0.7/*rigid.velocity.normalized.x == 0*/)
+        if (Mathf.Abs(rigid.velocity.x) < 0.7/*rigid.velocity.normalized.x == 0*/)
         {
             anim.SetBool("isWalking", false);
         }
@@ -60,21 +64,21 @@ public class PlayerMove : MonoBehaviour
         rigid.AddForce(Vector2.right * h, ForceMode2D.Impulse);
         if (rigid.velocity.x > maxSpeed)
             rigid.velocity = new Vector2(maxSpeed, rigid.velocity.y);
-        else if (rigid.velocity.x < maxSpeed*(-1))
-            rigid.velocity = new Vector2(maxSpeed*(-1), rigid.velocity.y);
+        else if (rigid.velocity.x < maxSpeed * (-1))
+            rigid.velocity = new Vector2(maxSpeed * (-1), rigid.velocity.y);
 
         //Landing Platform
-        if(rigid.velocity.y < 0)
+        if (rigid.velocity.y < 0)
         {
 
-        
+
             Debug.DrawRay(rigid.position, Vector3.down, new Color(0, 1, 0));
 
             RaycastHit2D rayHit = Physics2D.Raycast(rigid.position, Vector3.down, 1, LayerMask.GetMask("Platform"));
-    
-            if(rayHit.collider != null)
+
+            if (rayHit.collider != null)
             {
-                if(rayHit.distance < 0.5f)
+                if (rayHit.distance < 0.5f)
                 {
                     anim.SetBool("isJumping", false);
                     jump_cnt = 0;
@@ -85,21 +89,37 @@ public class PlayerMove : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if(collision.gameObject.tag == "Enemy")
+        if (collision.gameObject.tag == "Enemy")
         {
             OnDamaged(collision.transform.position);
         }
+
     }
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.gameObject.tag == "Finish")
+        if (collision.gameObject.tag == "Finish")
         {
             //Next Stage
             gameManager.heart = 3;
             gameManager.NextStage();
         }
+
+        if (collision.gameObject.tag == "BoostPlatform")
+        {
+
+  
+            rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+            jumpPower = Mathf.Clamp(jumpPower, 0, Max);
+        }
     }
+
+
+
+    //16*32픽셀 장애물 점프력  //32pix = 0.32meters
+    //jumpPower = Mathf.Sqrt(2 * Mathf.Abs(Physics2D.gravity.y) * 0.32f);
+
+
 
     void OnDamaged(Vector2 targetPos)
     {
@@ -114,12 +134,12 @@ public class PlayerMove : MonoBehaviour
 
         // Reaction Force : 한대 맞고 튕겨나가기
         int dirc = transform.position.x - targetPos.x > 0 ? 1 : -1;
-        rigid.AddForce(new Vector2(dirc,1)*7, ForceMode2D.Impulse);
+        rigid.AddForce(new Vector2(dirc, 1) * 7, ForceMode2D.Impulse);
 
         // Animation
         anim.SetTrigger("doDamaged");
 
-        Invoke("OffDamaged",3); // 무적시간 3초 후 푸는 함수 호출
+        Invoke("OffDamaged", 3); // 무적시간 3초 후 푸는 함수 호출
     }
 
     void OffDamaged()
@@ -129,3 +149,4 @@ public class PlayerMove : MonoBehaviour
     }
 
 }
+
